@@ -1,9 +1,18 @@
-import { mockBooks } from './mock/mockBooks'
-import { mockDelay } from './mock/mockDelay'
 import type { Book, BookSearchFilters } from '../types/book'
 import { filterBooksByQueryAndCategory, sortBooksByRating } from '../utils/bookFilters'
+import { getJson } from './apiClient'
+import { getBooks } from './booksService'
 
 export async function searchBooks(filters: BookSearchFilters): Promise<Book[]> {
-  await mockDelay(320)
-  return sortBooksByRating(filterBooksByQueryAndCategory(mockBooks, filters))
+  const query = filters.query.trim()
+  const books = query
+    ? await getJson<Book[]>(`/api/books/search?q=${encodeURIComponent(query)}`)
+    : await getBooks()
+
+  return sortBooksByRating(
+    filterBooksByQueryAndCategory(books, {
+      query: '',
+      category: filters.category,
+    }),
+  )
 }

@@ -44,10 +44,10 @@ export function BooksPage() {
     <div className="page-stack">
       <section className="page-heading">
         <p className="eyebrow">Kitoblar katalogi</p>
-        <h1>Kitoblarni qidirish va koʻrish</h1>
+        <h1>Kitoblarni qidirish va ko‘rish</h1>
         <p>
-          Qidiruv maydoni backend tayyor boʻlganda Meilisearch yoki ASP.NET Core API orqali ishlashga
-          moslashtiriladi.
+          Kitoblar ro‘yxati va live search natijalari ASP.NET Core backend API orqali
+          yuklanadi.
         </p>
       </section>
 
@@ -67,7 +67,7 @@ export function BooksPage() {
       {!isLoading && !error && books.length === 0 ? (
         <EmptyState
           title="Mos kitob topilmadi"
-          description="Qidiruv soʻzini oʻzgartiring yoki boshqa kategoriya tanlang."
+          description="Qidiruv so‘zini o‘zgartiring yoki boshqa kategoriya tanlang."
         />
       ) : null}
 

@@ -24,7 +24,7 @@ export function RatingForm({ onSubmit }: RatingFormProps) {
         comment,
       })
       setComment('')
-      setStatusMessage('Baholash qabul qilindi. Mock rejimda natija faqat sahifada yangilanadi.')
+      setStatusMessage('Baholash qabul qilindi. Reyting maʼlumotlari yangilandi.')
     } catch {
       setStatusMessage('Baholashni yuborishda xatolik yuz berdi.')
     } finally {

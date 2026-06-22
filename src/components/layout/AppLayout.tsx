@@ -25,8 +25,8 @@ export function AppLayout() {
       </main>
 
       <footer className="site-footer">
-        <span>Frontend mock maʼlumotlar bilan ishlamoqda.</span>
-        <span>Backend keyingi bosqichda ulanadi.</span>
+        <span>Frontend ASP.NET Core backend API bilan ishlaydi.</span>
+        <span>API manzili VITE_API_BASE_URL orqali sozlanadi.</span>
       </footer>
     </div>
   )

@@ -7,7 +7,7 @@ import { LoadingState } from '../components/common/LoadingState'
 import { RatingForm } from '../components/rating/RatingForm'
 import { RatingStars } from '../components/rating/RatingStars'
 import { getBookById } from '../services/booksService'
-import { calculateUpdatedBookRating, submitBookRating } from '../services/ratingsService'
+import { submitBookRating } from '../services/ratingsService'
 import type { Book } from '../types/book'
 import type { RatingSubmission } from '../types/rating'
 
@@ -59,10 +59,8 @@ export function BookDetailsPage() {
       return
     }
 
-    await submitBookRating(book.id, submission)
-    setBook((currentBook) =>
-      currentBook ? calculateUpdatedBookRating(currentBook, submission.value) : currentBook,
-    )
+    const updatedBook = await submitBookRating(book.id, submission)
+    setBook(updatedBook)
   }
 
   if (isLoading) {
@@ -77,7 +75,7 @@ export function BookDetailsPage() {
     return (
       <EmptyState
         title="Kitob topilmadi"
-        description="Ushbu identifikator boʻyicha mock maʼlumotlar ichida kitob mavjud emas."
+        description="Ushbu identifikator bo‘yicha backend API kitob qaytarmadi."
       />
     )
   }
@@ -85,7 +83,7 @@ export function BookDetailsPage() {
   return (
     <article className="details-page">
       <Link className="text-link" to="/books">
-        Kitoblar roʻyxatiga qaytish
+        Kitoblar ro‘yxatiga qaytish
       </Link>
 
       <section className="book-details">
@@ -103,11 +101,30 @@ export function BookDetailsPage() {
             </div>
             <div>
               <dt>Maʼlumot manbasi</dt>
-              <dd>Mock service</dd>
+              <dd>ASP.NET Core API</dd>
             </div>
           </dl>
         </div>
       </section>
+
+      {book.recentRatings?.length ? (
+        <section className="section-block">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Soʻnggi baholar</p>
+              <h2>Foydalanuvchi fikrlari</h2>
+            </div>
+          </div>
+          <div className="ratings-list">
+            {book.recentRatings.map((rating) => (
+              <article key={rating.id} className="rating-item">
+                <strong>{rating.value} / 5</strong>
+                {rating.comment ? <p>{rating.comment}</p> : <p>Izoh qoldirilmagan.</p>}
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="section-block rating-section">
         <div>

@@ -1,6 +1,6 @@
 import type { Book, BookSearchFilters } from '../types/book'
 
-function isDefinedCategory(category: string | undefined): category is string {
+function isDefinedCategory(category: string | null | undefined): category is string {
   return typeof category === 'string' && category.length > 0
 }
 

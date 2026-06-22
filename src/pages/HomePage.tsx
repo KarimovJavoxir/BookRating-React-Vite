@@ -49,12 +49,12 @@ export function HomePage() {
           <p className="eyebrow">Diplom loyihasi frontend bosqichi</p>
           <h1>Axborot resurs markazi kitoblari reytingi</h1>
           <p>
-            Kitoblarni koʻrish, qidirish, batafsil maʼlumot olish va 1 dan 5 gacha baholash
-            imkonini beruvchi React frontend.
+            Kitoblarni ko‘rish, qidirish, batafsil maʼlumot olish va 1 dan 5 gacha
+            baholash imkonini beruvchi React frontend.
           </p>
           <div className="hero-actions">
             <Link className="primary-button" to="/books">
-              Kitoblarni koʻrish
+              Kitoblarni ko‘rish
             </Link>
           </div>
         </div>
@@ -68,8 +68,8 @@ export function HomePage() {
             <span>1-5 oraligʻida baholash</span>
           </div>
           <div>
-            <strong>Mock service</strong>
-            <span>Backendga tayyor struktura</span>
+            <strong>Backend API</strong>
+            <span>ASP.NET Core orqali maʼlumot olish</span>
           </div>
         </div>
       </section>
@@ -77,7 +77,7 @@ export function HomePage() {
       <section className="section-block">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">Namuna maʼlumotlar</p>
+            <p className="eyebrow">Backend maʼlumotlari</p>
             <h2>Yuqori reytingli kitoblar</h2>
           </div>
           <Link className="text-link" to="/books">
@@ -88,7 +88,7 @@ export function HomePage() {
         {isLoading ? <LoadingState /> : null}
         {error ? <ErrorState message={error} /> : null}
         {!isLoading && !error && books.length === 0 ? (
-          <EmptyState title="Kitoblar topilmadi" description="Mock maʼlumotlar roʻyxati boʻsh." />
+          <EmptyState title="Kitoblar topilmadi" description="Backend API kitoblar ro‘yxatini qaytarmadi." />
         ) : null}
         {!isLoading && !error && books.length > 0 ? <BookList books={books} /> : null}
       </section>

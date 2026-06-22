@@ -554,6 +554,22 @@ p {
   align-items: flex-start;
 }
 
+.ratings-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.rating-item {
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
+}
+
+.rating-item p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
 .rating-form {
   width: min(480px, 100%);
   display: grid;
