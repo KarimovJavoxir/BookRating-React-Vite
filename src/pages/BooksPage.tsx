@@ -60,26 +60,23 @@ export function BooksPage() {
         />
       </section>
 
-      {categoryError ? <ErrorState message={categoryError} /> : null}
-      {isLoading ? <LoadingState message="Kitoblar qidirilmoqda..." /> : null}
-      {error ? <ErrorState message={error} /> : null}
+      <section className="section-block">
+        <div className="result-summary">
+          <strong>{books.length}</strong>
+          <span>ta kitob topildi</span>
+        </div>
 
-      {!isLoading && !error && books.length === 0 ? (
-        <EmptyState
-          title="Mos kitob topilmadi"
-          description="Qidiruv soʻzini oʻzgartiring yoki boshqa kategoriya tanlang."
-        />
-      ) : null}
-
-      {!isLoading && !error && books.length > 0 ? (
-        <section className="section-block">
-          <div className="result-summary">
-            <strong>{books.length}</strong>
-            <span>ta kitob topildi</span>
-          </div>
-          <BookList books={books} />
-        </section>
-      ) : null}
+        {categoryError ? <ErrorState message={categoryError} /> : null}
+        {isLoading ? <LoadingState message="Kitoblar qidirilmoqda..." /> : null}
+        {error ? <ErrorState message={error} /> : null}
+        {!isLoading && !error && books.length === 0 ? (
+          <EmptyState
+            title="Mos kitob topilmadi"
+            description="Qidiruv soʻzini oʻzgartiring yoki boshqa kategoriya tanlang."
+          />
+        ) : null}
+        {!isLoading && !error && books.length > 0 ? <BookList books={books} /> : null}
+      </section>
     </div>
   )
 }
