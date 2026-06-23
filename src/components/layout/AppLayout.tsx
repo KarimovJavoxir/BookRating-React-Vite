@@ -1,5 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../../context/useAuth'
+import { ThemeToggle } from '../common/ThemeToggle'
+import { UserAvatar } from '../common/UserAvatar'
 
 export function AppLayout() {
   const { user, logout } = useAuth()
@@ -23,10 +25,11 @@ export function AppLayout() {
           {user?.isAdmin ? <NavLink to="/admin">Admin</NavLink> : null}
           {!user ? <NavLink to="/login">Kirish</NavLink> : null}
           {!user ? <NavLink to="/register">Roʻyxatdan oʻtish</NavLink> : null}
+          <ThemeToggle />
         </nav>
         {user ? (
           <div className="header-user">
-            <span className="avatar avatar--small">{getUserInitial(user.username)}</span>
+            <UserAvatar username={user.username} profilePictureUrl={user.profilePictureUrl} size="small" />
             <span>{user.username}</span>
             <button className="text-button" type="button" onClick={logout}>
               Chiqish
@@ -45,8 +48,4 @@ export function AppLayout() {
       </footer>
     </div>
   )
-}
-
-function getUserInitial(username: string): string {
-  return username.trim().charAt(0).toUpperCase() || 'U'
 }

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { EmptyState } from '../components/common/EmptyState'
 import { ErrorState } from '../components/common/ErrorState'
 import { LoadingState } from '../components/common/LoadingState'
+import { UserAvatar } from '../components/common/UserAvatar'
 import { useAuth } from '../context/useAuth'
 import { getAdminDashboard, getAdminRatings, getAdminUsers } from '../services/adminService'
 import { createBook, deleteBook, getAdminBooks, updateBook } from '../services/booksService'
@@ -397,11 +398,7 @@ function RatingsTable({
                 <td>{rating.bookTitle}</td>
                 <td>
                   <div className="rating-user">
-                    {rating.userProfilePictureUrl ? (
-                      <img className="avatar" src={rating.userProfilePictureUrl} alt={`${rating.username} profili`} />
-                    ) : (
-                      <span className="avatar">{rating.username.charAt(0).toUpperCase()}</span>
-                    )}
+                    <UserAvatar username={rating.username} profilePictureUrl={rating.userProfilePictureUrl} />
                     <span>{rating.username}</span>
                   </div>
                 </td>
@@ -452,11 +449,7 @@ function UsersTable({ users }: { users: AdminUser[] }) {
               <tr key={item.id}>
                 <td>
                   <div className="rating-user">
-                    {item.profilePictureUrl ? (
-                      <img className="avatar" src={item.profilePictureUrl} alt={`${item.username} profili`} />
-                    ) : (
-                      <span className="avatar">{item.username.charAt(0).toUpperCase()}</span>
-                    )}
+                    <UserAvatar username={item.username} profilePictureUrl={item.profilePictureUrl} />
                     <span>{item.username}</span>
                   </div>
                 </td>

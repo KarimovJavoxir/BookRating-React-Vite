@@ -1,3 +1,5 @@
+import type { BookRatingStatus } from './rating'
+
 export interface AdminUser {
   id: string
   username: string
@@ -17,6 +19,8 @@ export interface AdminBookRating {
   userProfilePictureUrl?: string | null
   value: number
   comment?: string | null
+  status?: BookRatingStatus
+  banReason?: string | null
   createdAt: string
 }
 

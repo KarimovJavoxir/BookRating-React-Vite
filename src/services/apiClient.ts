@@ -1,7 +1,13 @@
 const defaultApiBaseUrl = 'http://localhost:5099'
-const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim() || defaultApiBaseUrl
 
-export const apiBaseUrl = configuredBaseUrl.replace(/\/$/, '')
+interface ApiClientEnvironment {
+  VITE_API_BASE_URL?: string
+  PROD?: boolean
+}
+
+let unauthorizedHandler: (() => void) | null = null
+
+export const apiBaseUrl = resolveApiBaseUrl()
 
 interface ProblemDetailsResponse {
   title?: unknown
@@ -20,6 +26,24 @@ export class ApiClientError extends Error {
 
 export interface ApiRequestOptions {
   authToken?: string
+}
+
+export function resolveApiBaseUrl(env: ApiClientEnvironment = import.meta.env): string {
+  const configuredBaseUrl = env.VITE_API_BASE_URL?.trim()
+
+  if (!configuredBaseUrl && env.PROD) {
+    throw new Error('VITE_API_BASE_URL production uchun majburiy.')
+  }
+
+  return (configuredBaseUrl || defaultApiBaseUrl).replace(/\/$/, '')
+}
+
+export function setUnauthorizedHandler(handler: () => void): void {
+  unauthorizedHandler = handler
+}
+
+export function clearUnauthorizedHandler(): void {
+  unauthorizedHandler = null
 }
 
 export async function getJson<TResponse>(
@@ -70,6 +94,10 @@ async function requestJson<TResponse>(
   const response = await fetch(buildApiUrl(path), requestInit)
 
   if (!response.ok) {
+    if ((response.status === 401 || response.status === 403) && options?.authToken) {
+      unauthorizedHandler?.()
+    }
+
     throw new ApiClientError(await getErrorMessage(response), response.status)
   }
 

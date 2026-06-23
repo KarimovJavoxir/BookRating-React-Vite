@@ -47,6 +47,13 @@ describe('authService', () => {
     expect(getStoredAuthSession()).toBeNull()
   })
 
+  test('clears invalid stored auth session payloads', () => {
+    localStorage.setItem('bookrate.auth', JSON.stringify({ token: 42, user: null }))
+
+    expect(getStoredAuthSession()).toBeNull()
+    expect(localStorage.getItem('bookrate.auth')).toBeNull()
+  })
+
   test('logs in through the backend auth endpoint', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(authResult))
 

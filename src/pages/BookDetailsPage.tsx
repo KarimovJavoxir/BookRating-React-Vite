@@ -4,6 +4,7 @@ import { BookCover } from '../components/books/BookCover'
 import { EmptyState } from '../components/common/EmptyState'
 import { ErrorState } from '../components/common/ErrorState'
 import { LoadingState } from '../components/common/LoadingState'
+import { UserAvatar } from '../components/common/UserAvatar'
 import { RatingForm } from '../components/rating/RatingForm'
 import { RatingStars } from '../components/rating/RatingStars'
 import { useAuth } from '../context/useAuth'
@@ -125,15 +126,7 @@ export function BookDetailsPage() {
             {book.recentRatings.map((rating) => (
               <article key={rating.id} className="rating-item">
                 <div className="rating-user">
-                  {rating.userProfilePictureUrl ? (
-                    <img
-                      className="avatar"
-                      src={rating.userProfilePictureUrl}
-                      alt={`${rating.username ?? 'Foydalanuvchi'} profili`}
-                    />
-                  ) : (
-                    <span className="avatar">{getUserInitial(rating.username)}</span>
-                  )}
+                  <UserAvatar username={rating.username} profilePictureUrl={rating.userProfilePictureUrl} />
                   <div>
                     <strong>{rating.username ?? 'Foydalanuvchi'}</strong>
                     <span>{rating.value} / 5</span>
@@ -164,8 +157,4 @@ export function BookDetailsPage() {
       </section>
     </article>
   )
-}
-
-function getUserInitial(username?: string | null): string {
-  return username?.trim().charAt(0).toUpperCase() || 'U'
 }

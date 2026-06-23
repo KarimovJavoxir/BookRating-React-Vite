@@ -22,7 +22,13 @@ export function getStoredAuthSession(): AuthResult | null {
   }
 
   try {
-    return JSON.parse(storedValue) as AuthResult
+    const session = JSON.parse(storedValue) as unknown
+    if (!isAuthResult(session)) {
+      clearStoredAuthSession()
+      return null
+    }
+
+    return session
   } catch {
     clearStoredAuthSession()
     return null
@@ -31,4 +37,23 @@ export function getStoredAuthSession(): AuthResult | null {
 
 export function clearStoredAuthSession(): void {
   localStorage.removeItem(authStorageKey)
+}
+
+function isAuthResult(value: unknown): value is AuthResult {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+
+  const session = value as Partial<AuthResult>
+  const user = session.user
+
+  return (
+    typeof session.token === 'string' &&
+    !!user &&
+    typeof user === 'object' &&
+    typeof user.id === 'string' &&
+    typeof user.username === 'string' &&
+    typeof user.email === 'string' &&
+    typeof user.isAdmin === 'boolean'
+  )
 }

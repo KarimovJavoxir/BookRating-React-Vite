@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { getJson, postJson } from './apiClient'
+import {
+  clearUnauthorizedHandler,
+  getJson,
+  postJson,
+  resolveApiBaseUrl,
+  setUnauthorizedHandler,
+} from './apiClient'
 
 const fetchMock = vi.fn()
 
@@ -16,6 +22,7 @@ function jsonResponse(body: unknown, init?: ResponseInit): Promise<Response> {
 describe('apiClient', () => {
   beforeEach(() => {
     fetchMock.mockReset()
+    clearUnauthorizedHandler()
     globalThis.fetch = fetchMock as unknown as typeof fetch
   })
 
@@ -80,5 +87,21 @@ describe('apiClient', () => {
     await expect(getJson('/api/books/missing')).rejects.toThrow(
       'Reyting qiymati notoʻgʻri. Rating value must be between 1 and 5.',
     )
+  })
+
+  test('rejects missing production API base URL instead of falling back to localhost', () => {
+    expect(() => resolveApiBaseUrl({ VITE_API_BASE_URL: '', PROD: true })).toThrow(
+      'VITE_API_BASE_URL production uchun majburiy.',
+    )
+  })
+
+  test('runs the unauthorized handler when the backend rejects an authenticated request', async () => {
+    const unauthorizedHandler = vi.fn()
+    setUnauthorizedHandler(unauthorizedHandler)
+    fetchMock.mockResolvedValueOnce(jsonResponse({ title: 'Unauthorized' }, { status: 401 }))
+
+    await expect(getJson('/api/admin/books', { authToken: 'expired-token' })).rejects.toThrow()
+
+    expect(unauthorizedHandler).toHaveBeenCalledTimes(1)
   })
 })

@@ -1,5 +1,7 @@
 export type RatingValue = 1 | 2 | 3 | 4 | 5
 
+export type BookRatingStatus = 'New' | 'Verified' | 'Banned'
+
 export interface BookRating {
   id: string
   bookId: string
@@ -8,6 +10,8 @@ export interface BookRating {
   userProfilePictureUrl?: string | null
   value: number
   comment?: string
+  status?: BookRatingStatus
+  banReason?: string | null
   createdAt: string
 }
 
