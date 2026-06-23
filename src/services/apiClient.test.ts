@@ -49,6 +49,23 @@ describe('apiClient', () => {
     })
   })
 
+  test('adds bearer token when an authenticated request is sent', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ id: 'book-1' }))
+
+    await postJson('/api/books', { title: 'Yangi kitob' }, { authToken: 'jwt-token' })
+
+    expect(fetchMock).toHaveBeenCalledWith('http://localhost:5099/api/books', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer jwt-token',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        title: 'Yangi kitob',
+      }),
+    })
+  })
+
   test('uses API problem details in error messages', async () => {
     fetchMock.mockResolvedValueOnce(
       jsonResponse(

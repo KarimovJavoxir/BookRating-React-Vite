@@ -21,6 +21,7 @@ export function calculateUpdatedBookRating(book: Book, value: RatingValue): Book
 export async function submitBookRating(
   bookId: string,
   submission: RatingSubmission,
+  authToken?: string,
 ): Promise<Book> {
   if (!isRatingValue(submission.value)) {
     throw new Error('Reyting qiymati 1 dan 5 gacha boʻlishi kerak.')
@@ -29,5 +30,5 @@ export async function submitBookRating(
   return postJson<Book>(`/api/books/${encodeURIComponent(bookId)}/ratings`, {
     value: submission.value,
     comment: submission.comment?.trim() || undefined,
-  })
+  }, authToken ? { authToken } : undefined)
 }

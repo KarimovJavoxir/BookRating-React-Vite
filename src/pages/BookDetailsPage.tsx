@@ -6,6 +6,7 @@ import { ErrorState } from '../components/common/ErrorState'
 import { LoadingState } from '../components/common/LoadingState'
 import { RatingForm } from '../components/rating/RatingForm'
 import { RatingStars } from '../components/rating/RatingStars'
+import { useAuth } from '../context/useAuth'
 import { getBookById } from '../services/booksService'
 import { submitBookRating } from '../services/ratingsService'
 import type { Book } from '../types/book'
@@ -13,6 +14,7 @@ import type { RatingSubmission } from '../types/rating'
 
 export function BookDetailsPage() {
   const { id } = useParams()
+  const { token } = useAuth()
   const [book, setBook] = useState<Book | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -59,7 +61,11 @@ export function BookDetailsPage() {
       return
     }
 
-    const updatedBook = await submitBookRating(book.id, submission)
+    if (!token) {
+      throw new Error('Baholash uchun tizimga kirish kerak.')
+    }
+
+    const updatedBook = await submitBookRating(book.id, submission, token)
     setBook(updatedBook)
   }
 
@@ -75,7 +81,7 @@ export function BookDetailsPage() {
     return (
       <EmptyState
         title="Kitob topilmadi"
-        description="Ushbu identifikator bo‘yicha backend API kitob qaytarmadi."
+        description="Ushbu identifikator boʻyicha backend API kitob qaytarmadi."
       />
     )
   }
@@ -83,7 +89,7 @@ export function BookDetailsPage() {
   return (
     <article className="details-page">
       <Link className="text-link" to="/books">
-        Kitoblar ro‘yxatiga qaytish
+        Kitoblar roʻyxatiga qaytish
       </Link>
 
       <section className="book-details">
@@ -118,7 +124,21 @@ export function BookDetailsPage() {
           <div className="ratings-list">
             {book.recentRatings.map((rating) => (
               <article key={rating.id} className="rating-item">
-                <strong>{rating.value} / 5</strong>
+                <div className="rating-user">
+                  {rating.userProfilePictureUrl ? (
+                    <img
+                      className="avatar"
+                      src={rating.userProfilePictureUrl}
+                      alt={`${rating.username ?? 'Foydalanuvchi'} profili`}
+                    />
+                  ) : (
+                    <span className="avatar">{getUserInitial(rating.username)}</span>
+                  )}
+                  <div>
+                    <strong>{rating.username ?? 'Foydalanuvchi'}</strong>
+                    <span>{rating.value} / 5</span>
+                  </div>
+                </div>
                 {rating.comment ? <p>{rating.comment}</p> : <p>Izoh qoldirilmagan.</p>}
               </article>
             ))}
@@ -131,8 +151,21 @@ export function BookDetailsPage() {
           <p className="eyebrow">Foydalanuvchi bahosi</p>
           <h2>Reyting yuborish</h2>
         </div>
-        <RatingForm onSubmit={handleRatingSubmit} />
+        {token ? (
+          <RatingForm onSubmit={handleRatingSubmit} />
+        ) : (
+          <div className="auth-required">
+            <p>Kitobga reyting qoldirish uchun avval tizimga kiring.</p>
+            <Link className="primary-button" to="/login">
+              Kirish
+            </Link>
+          </div>
+        )}
       </section>
     </article>
   )
+}
+
+function getUserInitial(username?: string | null): string {
+  return username?.trim().charAt(0).toUpperCase() || 'U'
 }

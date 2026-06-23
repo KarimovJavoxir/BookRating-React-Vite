@@ -1,6 +1,9 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { useAuth } from '../../context/useAuth'
 
 export function AppLayout() {
+  const { user, logout } = useAuth()
+
   return (
     <div className="app-shell">
       <header className="site-header">
@@ -17,7 +20,19 @@ export function AppLayout() {
         <nav className="site-nav" aria-label="Asosiy menyu">
           <NavLink to="/">Bosh sahifa</NavLink>
           <NavLink to="/books">Kitoblar</NavLink>
+          {user?.isAdmin ? <NavLink to="/admin">Admin</NavLink> : null}
+          {!user ? <NavLink to="/login">Kirish</NavLink> : null}
+          {!user ? <NavLink to="/register">Roʻyxatdan oʻtish</NavLink> : null}
         </nav>
+        {user ? (
+          <div className="header-user">
+            <span className="avatar avatar--small">{getUserInitial(user.username)}</span>
+            <span>{user.username}</span>
+            <button className="text-button" type="button" onClick={logout}>
+              Chiqish
+            </button>
+          </div>
+        ) : null}
       </header>
 
       <main className="page-content">
@@ -30,4 +45,8 @@ export function AppLayout() {
       </footer>
     </div>
   )
+}
+
+function getUserInitial(username: string): string {
+  return username.trim().charAt(0).toUpperCase() || 'U'
 }

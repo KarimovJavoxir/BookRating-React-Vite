@@ -18,22 +18,56 @@ export class ApiClientError extends Error {
   }
 }
 
-export async function getJson<TResponse>(path: string): Promise<TResponse> {
-  return requestJson<TResponse>(path)
+export interface ApiRequestOptions {
+  authToken?: string
 }
 
-export async function postJson<TResponse>(path: string, body: unknown): Promise<TResponse> {
+export async function getJson<TResponse>(
+  path: string,
+  options?: ApiRequestOptions,
+): Promise<TResponse> {
+  return requestJson<TResponse>(path, undefined, options)
+}
+
+export async function postJson<TResponse>(
+  path: string,
+  body: unknown,
+  options?: ApiRequestOptions,
+): Promise<TResponse> {
   return requestJson<TResponse>(path, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
-  })
+  }, options)
 }
 
-async function requestJson<TResponse>(path: string, init?: RequestInit): Promise<TResponse> {
-  const response = await fetch(buildApiUrl(path), init)
+export async function putJson<TResponse>(
+  path: string,
+  body: unknown,
+  options?: ApiRequestOptions,
+): Promise<TResponse> {
+  return requestJson<TResponse>(path, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  }, options)
+}
+
+export async function deleteJson(path: string, options?: ApiRequestOptions): Promise<void> {
+  return requestJson<void>(path, { method: 'DELETE' }, options)
+}
+
+async function requestJson<TResponse>(
+  path: string,
+  init?: RequestInit,
+  options?: ApiRequestOptions,
+): Promise<TResponse> {
+  const requestInit = buildRequestInit(init, options)
+  const response = await fetch(buildApiUrl(path), requestInit)
 
   if (!response.ok) {
     throw new ApiClientError(await getErrorMessage(response), response.status)
@@ -49,6 +83,39 @@ async function requestJson<TResponse>(path: string, init?: RequestInit): Promise
 function buildApiUrl(path: string): string {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
   return `${apiBaseUrl}${normalizedPath}`
+}
+
+function buildRequestInit(init?: RequestInit, options?: ApiRequestOptions): RequestInit | undefined {
+  if (!init && !options?.authToken) {
+    return undefined
+  }
+
+  return {
+    ...init,
+    headers: buildHeaders(init?.headers, options?.authToken),
+  }
+}
+
+function buildHeaders(headers?: HeadersInit, authToken?: string): HeadersInit | undefined {
+  const mergedHeaders: Record<string, string> = {}
+
+  if (authToken) {
+    mergedHeaders.Authorization = `Bearer ${authToken}`
+  }
+
+  if (headers instanceof Headers) {
+    headers.forEach((value, key) => {
+      mergedHeaders[key] = value
+    })
+  } else if (Array.isArray(headers)) {
+    headers.forEach(([key, value]) => {
+      mergedHeaders[key] = value
+    })
+  } else if (headers) {
+    Object.assign(mergedHeaders, headers)
+  }
+
+  return Object.keys(mergedHeaders).length > 0 ? mergedHeaders : undefined
 }
 
 async function getErrorMessage(response: Response): Promise<string> {

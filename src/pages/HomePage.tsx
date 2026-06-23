@@ -49,12 +49,12 @@ export function HomePage() {
           <p className="eyebrow">Diplom loyihasi frontend bosqichi</p>
           <h1>Axborot resurs markazi kitoblari reytingi</h1>
           <p>
-            Kitoblarni ko‘rish, qidirish, batafsil maʼlumot olish va 1 dan 5 gacha
+            Kitoblarni koʻrish, qidirish, batafsil maʼlumot olish va 1 dan 5 gacha
             baholash imkonini beruvchi React frontend.
           </p>
           <div className="hero-actions">
             <Link className="primary-button" to="/books">
-              Kitoblarni ko‘rish
+              Kitoblarni koʻrish
             </Link>
           </div>
         </div>
@@ -88,7 +88,7 @@ export function HomePage() {
         {isLoading ? <LoadingState /> : null}
         {error ? <ErrorState message={error} /> : null}
         {!isLoading && !error && books.length === 0 ? (
-          <EmptyState title="Kitoblar topilmadi" description="Backend API kitoblar ro‘yxatini qaytarmadi." />
+          <EmptyState title="Kitoblar topilmadi" description="Backend API kitoblar roʻyxatini qaytarmadi." />
         ) : null}
         {!isLoading && !error && books.length > 0 ? <BookList books={books} /> : null}
       </section>
