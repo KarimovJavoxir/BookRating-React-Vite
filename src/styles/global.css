@@ -642,6 +642,35 @@ p {
   font-size: 1.4rem;
 }
 
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.pagination-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.pagination-range,
+.pagination-current {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.secondary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .details-page {
   display: grid;
   gap: 20px;
@@ -1199,6 +1228,15 @@ th {
   .section-heading, .toolbar, .result-summary {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .pagination-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pagination-actions {
+    justify-content: space-between;
   }
 }
 

@@ -3,14 +3,19 @@ import { Link } from 'react-router-dom'
 import { EmptyState } from '../components/common/EmptyState'
 import { ErrorState } from '../components/common/ErrorState'
 import { LoadingState } from '../components/common/LoadingState'
+import { PaginationControls } from '../components/common/PaginationControls'
 import { UserAvatar } from '../components/common/UserAvatar'
 import { useAuth } from '../context/useAuth'
 import { getAdminDashboard, getAdminRatings, getAdminUsers } from '../services/adminService'
 import { createBook, deleteBook, getAdminBooks, updateBook } from '../services/booksService'
 import type { AdminBookRating, AdminDashboard, AdminUser } from '../types/admin'
+import type { PagedResponse, PaginationParams } from '../types/api'
 import type { Book, BookFormData } from '../types/book'
 
 type AdminTab = 'dashboard' | 'books' | 'ratings' | 'users'
+type AdminListTab = Exclude<AdminTab, 'dashboard'>
+
+const ADMIN_TABLE_PAGE_SIZE = 10
 
 const emptyBookForm: BookFormData = {
   title: '',
@@ -25,11 +30,16 @@ const emptyBookForm: BookFormData = {
 export function AdminPage() {
   const { token, user } = useAuth()
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard')
-  const [books, setBooks] = useState<Book[]>([])
-  const [ratings, setRatings] = useState<AdminBookRating[]>([])
-  const [users, setUsers] = useState<AdminUser[]>([])
+  const [booksPage, setBooksPage] = useState(() => createEmptyPagedResponse<Book>(ADMIN_TABLE_PAGE_SIZE))
+  const [ratingsPage, setRatingsPage] = useState(() => createEmptyPagedResponse<AdminBookRating>(ADMIN_TABLE_PAGE_SIZE))
+  const [usersPage, setUsersPage] = useState(() => createEmptyPagedResponse<AdminUser>(ADMIN_TABLE_PAGE_SIZE))
   const [dashboard, setDashboard] = useState<AdminDashboard | null>(null)
   const [dateRange, setDateRange] = useState(() => getDefaultDateRange())
+  const [pagination, setPagination] = useState<Record<AdminListTab, Required<PaginationParams>>>(() => ({
+    books: { page: 1, pageSize: ADMIN_TABLE_PAGE_SIZE },
+    ratings: { page: 1, pageSize: ADMIN_TABLE_PAGE_SIZE },
+    users: { page: 1, pageSize: ADMIN_TABLE_PAGE_SIZE },
+  }))
   const [form, setForm] = useState<BookFormData>(emptyBookForm)
   const [editingBookId, setEditingBookId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -43,20 +53,20 @@ export function AdminPage() {
     try {
       const [dashboardData, bookItems, ratingItems, userItems] = await Promise.all([
         getAdminDashboard(authToken, dateRange),
-        getAdminBooks(authToken),
-        getAdminRatings(authToken),
-        getAdminUsers(authToken),
+        getAdminBooks(authToken, pagination.books),
+        getAdminRatings(authToken, pagination.ratings),
+        getAdminUsers(authToken, pagination.users),
       ])
       setDashboard(dashboardData)
-      setBooks(bookItems)
-      setRatings(ratingItems)
-      setUsers(userItems)
+      setBooksPage(bookItems)
+      setRatingsPage(ratingItems)
+      setUsersPage(userItems)
     } catch {
       setError('Admin maʼlumotlarini yuklashda xatolik yuz berdi.')
     } finally {
       setIsLoading(false)
     }
-  }, [dateRange])
+  }, [dateRange, pagination])
 
   useEffect(() => {
     if (!token || !user?.isAdmin) {
@@ -137,6 +147,16 @@ export function AdminPage() {
   function resetForm() {
     setEditingBookId(null)
     setForm(emptyBookForm)
+  }
+
+  function handleAdminPageChange(tab: AdminListTab, page: number) {
+    setPagination((currentPagination) => ({
+      ...currentPagination,
+      [tab]: {
+        ...currentPagination[tab],
+        page,
+      },
+    }))
   }
 
   if (!token) {
@@ -277,7 +297,7 @@ export function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {books.map((book) => (
+                  {booksPage.items.map((book) => (
                     <tr key={book.id}>
                       <td><Link className="text-link" to={`/books/${book.id}`}>{book.title}</Link></td>
                       <td>{book.author}</td>
@@ -299,12 +319,41 @@ export function AdminPage() {
                 </tbody>
               </table>
             </div>
+            <PaginationControls
+              currentPage={booksPage.page}
+              pageSize={booksPage.pageSize}
+              totalCount={booksPage.totalCount}
+              totalPages={booksPage.totalPages}
+              onPageChange={(page) => handleAdminPageChange('books', page)}
+            />
           </section>
         </section>
       ) : null}
 
-      {!isLoading && activeTab === 'ratings' ? <RatingsTable ratings={ratings} /> : null}
-      {!isLoading && activeTab === 'users' ? <UsersTable users={users} /> : null}
+      {!isLoading && activeTab === 'ratings' ? (
+        <RatingsTable
+          ratings={ratingsPage.items}
+          pagination={{
+            currentPage: ratingsPage.page,
+            pageSize: ratingsPage.pageSize,
+            totalCount: ratingsPage.totalCount,
+            totalPages: ratingsPage.totalPages,
+            onPageChange: (page) => handleAdminPageChange('ratings', page),
+          }}
+        />
+      ) : null}
+      {!isLoading && activeTab === 'users' ? (
+        <UsersTable
+          users={usersPage.items}
+          pagination={{
+            currentPage: usersPage.page,
+            pageSize: usersPage.pageSize,
+            totalCount: usersPage.totalCount,
+            totalPages: usersPage.totalPages,
+            onPageChange: (page) => handleAdminPageChange('users', page),
+          }}
+        />
+      ) : null}
     </div>
   )
 }
@@ -374,9 +423,11 @@ function MetricCard({ label, value }: { label: string; value: number | string })
 function RatingsTable({
   ratings,
   title = 'Book rates jadvali',
+  pagination,
 }: {
   ratings: AdminBookRating[]
   title?: string
+  pagination?: PaginationView
 }) {
   return (
     <section className="section-block table-panel">
@@ -410,6 +461,7 @@ function RatingsTable({
           </tbody>
         </table>
       </div>
+      {pagination ? <PaginationControls {...pagination} /> : null}
     </section>
   )
 }
@@ -429,7 +481,7 @@ function toDateInputValue(value: Date): string {
   return value.toISOString().slice(0, 10)
 }
 
-function UsersTable({ users }: { users: AdminUser[] }) {
+function UsersTable({ users, pagination }: { users: AdminUser[]; pagination?: PaginationView }) {
   return (
     <section className="section-block table-panel">
       <h2>Foydalanuvchilar jadvali</h2>
@@ -462,6 +514,25 @@ function UsersTable({ users }: { users: AdminUser[] }) {
           </tbody>
         </table>
       </div>
+      {pagination ? <PaginationControls {...pagination} /> : null}
     </section>
   )
+}
+
+interface PaginationView {
+  currentPage: number
+  pageSize: number
+  totalCount: number
+  totalPages: number
+  onPageChange: (page: number) => void
+}
+
+function createEmptyPagedResponse<T>(pageSize: number): PagedResponse<T> {
+  return {
+    items: [],
+    page: 1,
+    pageSize,
+    totalCount: 0,
+    totalPages: 0,
+  }
 }

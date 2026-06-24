@@ -30,10 +30,17 @@ describe('adminService', () => {
         ratingsCount: 2,
       },
     ]
-    fetchMock.mockResolvedValueOnce(jsonResponse(users))
+    const page = {
+      items: users,
+      page: 2,
+      pageSize: 10,
+      totalCount: 12,
+      totalPages: 2,
+    }
+    fetchMock.mockResolvedValueOnce(jsonResponse(page))
 
-    await expect(getAdminUsers('admin-token')).resolves.toEqual(users)
-    expect(fetchMock).toHaveBeenCalledWith('http://localhost:5099/api/admin/users', {
+    await expect(getAdminUsers('admin-token', { page: 2, pageSize: 10 })).resolves.toEqual(page)
+    expect(fetchMock).toHaveBeenCalledWith('http://localhost:5099/api/admin/users?page=2&pageSize=10', {
       headers: {
         Authorization: 'Bearer admin-token',
       },
@@ -54,10 +61,17 @@ describe('adminService', () => {
         createdAt: '2026-06-23T00:00:00Z',
       },
     ]
-    fetchMock.mockResolvedValueOnce(jsonResponse(ratings))
+    const page = {
+      items: ratings,
+      page: 4,
+      pageSize: 20,
+      totalCount: 63,
+      totalPages: 4,
+    }
+    fetchMock.mockResolvedValueOnce(jsonResponse(page))
 
-    await expect(getAdminRatings('admin-token')).resolves.toEqual(ratings)
-    expect(fetchMock).toHaveBeenCalledWith('http://localhost:5099/api/admin/ratings', {
+    await expect(getAdminRatings('admin-token', { page: 4, pageSize: 20 })).resolves.toEqual(page)
+    expect(fetchMock).toHaveBeenCalledWith('http://localhost:5099/api/admin/ratings?page=4&pageSize=20', {
       headers: {
         Authorization: 'Bearer admin-token',
       },

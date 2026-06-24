@@ -40,12 +40,18 @@ describe('searchService', () => {
   })
 
   test('loads the full backend list when the search query is empty', async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse(apiBooks))
+    fetchMock.mockResolvedValueOnce(jsonResponse({
+      items: apiBooks,
+      page: 1,
+      pageSize: 100,
+      totalCount: 2,
+      totalPages: 1,
+    }))
 
     const books = await searchBooks({ query: '' })
 
     expect(books.map((book) => book.id)).toEqual(['book-2', 'book-1'])
-    expect(fetchMock).toHaveBeenCalledWith('http://localhost:5099/api/books', undefined)
+    expect(fetchMock).toHaveBeenCalledWith('http://localhost:5099/api/books?page=1&pageSize=100', undefined)
   })
 
   test('uses the backend search endpoint for live search queries', async () => {

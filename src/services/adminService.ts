@@ -4,7 +4,9 @@ import type {
   AdminDashboardFilters,
   AdminUser,
 } from '../types/admin'
+import type { PagedResponse, PaginationParams } from '../types/api'
 import { getJson } from './apiClient'
+import { toPaginationQueryString } from './pagination'
 
 export async function getAdminDashboard(
   authToken: string,
@@ -25,10 +27,16 @@ export async function getAdminDashboard(
   return getJson<AdminDashboard>(path, { authToken })
 }
 
-export async function getAdminUsers(authToken: string): Promise<AdminUser[]> {
-  return getJson<AdminUser[]>('/api/admin/users', { authToken })
+export async function getAdminUsers(
+  authToken: string,
+  pagination: PaginationParams = {},
+): Promise<PagedResponse<AdminUser>> {
+  return getJson<PagedResponse<AdminUser>>(`/api/admin/users?${toPaginationQueryString(pagination)}`, { authToken })
 }
 
-export async function getAdminRatings(authToken: string): Promise<AdminBookRating[]> {
-  return getJson<AdminBookRating[]>('/api/admin/ratings', { authToken })
+export async function getAdminRatings(
+  authToken: string,
+  pagination: PaginationParams = {},
+): Promise<PagedResponse<AdminBookRating>> {
+  return getJson<PagedResponse<AdminBookRating>>(`/api/admin/ratings?${toPaginationQueryString(pagination)}`, { authToken })
 }
