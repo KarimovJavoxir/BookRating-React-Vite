@@ -23,6 +23,21 @@ npm test
 npm run build
 ```
 
+## Docker build va push
+
+Frontend Docker image build vaqtida `VITE_API_BASE_URL` qiymatini bundle ichiga yozadi. Local qiymat `.env.example` bilan bir xil:
+
+```text
+VITE_API_BASE_URL=http://localhost:5099
+```
+
+Image backend compose uslubiga mos `image` va `build` konfiguratsiyasi bilan tayyorlanadi:
+
+```bash
+docker compose build
+docker compose push
+```
+
 ## Route tuzilmasi
 
 - `/` - bosh sahifa
