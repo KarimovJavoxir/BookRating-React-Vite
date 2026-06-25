@@ -43,8 +43,8 @@ export function AppLayout() {
       </main>
 
       <footer className="site-footer">
-        <span>Frontend ASP.NET Core backend API bilan ishlaydi.</span>
-        <span>API manzili VITE_API_BASE_URL orqali sozlanadi.</span>
+        <span>Kitob Reytingi Axborot resurs markazi</span>
+        <span>2026</span>
       </footer>
     </div>
   )

@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { getAdminDashboard, getAdminRatings, getAdminUsers } from './adminService'
+import {
+  acceptAdminRating,
+  banAdminRating,
+  getAdminDashboard,
+  getAdminRatings,
+  getAdminUsers,
+} from './adminService'
 
 const fetchMock = vi.fn()
 
@@ -101,5 +107,33 @@ describe('adminService', () => {
         },
       },
     )
+  })
+
+  test('accepts a book rating with admin token', async () => {
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }))
+
+    await expect(acceptAdminRating('admin-token', 'rating-1')).resolves.toBeUndefined()
+    expect(fetchMock).toHaveBeenCalledWith('http://localhost:5099/api/admin/ratings/rating-1/accept', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer admin-token',
+      },
+      body: '{}',
+    })
+  })
+
+  test('bans a book rating with admin token and reason', async () => {
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }))
+
+    await expect(banAdminRating('admin-token', 'rating-2', 'Spam izoh')).resolves.toBeUndefined()
+    expect(fetchMock).toHaveBeenCalledWith('http://localhost:5099/api/admin/ratings/rating-2/ban', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer admin-token',
+      },
+      body: JSON.stringify({ banReason: 'Spam izoh' }),
+    })
   })
 })

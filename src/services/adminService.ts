@@ -5,7 +5,7 @@ import type {
   AdminUser,
 } from '../types/admin'
 import type { PagedResponse, PaginationParams } from '../types/api'
-import { getJson } from './apiClient'
+import { getJson, postJson } from './apiClient'
 import { toPaginationQueryString } from './pagination'
 
 export async function getAdminDashboard(
@@ -39,4 +39,16 @@ export async function getAdminRatings(
   pagination: PaginationParams = {},
 ): Promise<PagedResponse<AdminBookRating>> {
   return getJson<PagedResponse<AdminBookRating>>(`/api/admin/ratings?${toPaginationQueryString(pagination)}`, { authToken })
+}
+
+export async function acceptAdminRating(authToken: string, ratingId: string): Promise<void> {
+  return postJson<void>(`/api/admin/ratings/${encodeURIComponent(ratingId)}/accept`, {}, { authToken })
+}
+
+export async function banAdminRating(authToken: string, ratingId: string, banReason: string): Promise<void> {
+  return postJson<void>(
+    `/api/admin/ratings/${encodeURIComponent(ratingId)}/ban`,
+    { banReason },
+    { authToken },
+  )
 }

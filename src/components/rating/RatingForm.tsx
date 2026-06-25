@@ -25,8 +25,8 @@ export function RatingForm({ onSubmit }: RatingFormProps) {
       })
       setComment('')
       setStatusMessage('Baholash qabul qilindi. Izoh moderatsiyadan keyin koʻrinadi.')
-    } catch {
-      setStatusMessage('Baholashni yuborishda xatolik yuz berdi.')
+    } catch (error) {
+      setStatusMessage(getSubmitErrorMessage(error))
     } finally {
       setIsSubmitting(false)
     }
@@ -70,7 +70,15 @@ export function RatingForm({ onSubmit }: RatingFormProps) {
         {isSubmitting ? 'Yuborilmoqda...' : 'Baholash'}
       </button>
 
-      {statusMessage ? <p className="form-status">{statusMessage}</p> : null}
+      {statusMessage ? <p className="form-status" role="alert">{statusMessage}</p> : null}
     </form>
   )
+}
+
+function getSubmitErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message
+  }
+
+  return 'Baholashni yuborishda xatolik yuz berdi.'
 }

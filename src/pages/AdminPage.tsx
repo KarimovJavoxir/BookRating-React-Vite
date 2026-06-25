@@ -6,7 +6,13 @@ import { LoadingState } from '../components/common/LoadingState'
 import { PaginationControls } from '../components/common/PaginationControls'
 import { UserAvatar } from '../components/common/UserAvatar'
 import { useAuth } from '../context/useAuth'
-import { getAdminDashboard, getAdminRatings, getAdminUsers } from '../services/adminService'
+import {
+  acceptAdminRating,
+  banAdminRating,
+  getAdminDashboard,
+  getAdminRatings,
+  getAdminUsers,
+} from '../services/adminService'
 import { createBook, deleteBook, getAdminBooks, updateBook } from '../services/booksService'
 import type { AdminBookRating, AdminDashboard, AdminUser } from '../types/admin'
 import type { PagedResponse, PaginationParams } from '../types/api'
@@ -16,6 +22,7 @@ type AdminTab = 'dashboard' | 'books' | 'ratings' | 'users'
 type AdminListTab = Exclude<AdminTab, 'dashboard'>
 
 const ADMIN_TABLE_PAGE_SIZE = 10
+const DEFAULT_RATING_BAN_REASON = 'Admin tomonidan rad etildi'
 
 const emptyBookForm: BookFormData = {
   title: '',
@@ -45,6 +52,7 @@ export function AdminPage() {
   const [editingBookId, setEditingBookId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [moderatingRatingId, setModeratingRatingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const loadAdminData = useCallback(async (authToken: string) => {
@@ -148,6 +156,36 @@ export function AdminPage() {
     }
   }
 
+  async function handleAcceptRating(rating: AdminBookRating) {
+    await handleRatingModeration(rating.id, (authToken) => acceptAdminRating(authToken, rating.id))
+  }
+
+  async function handleBanRating(rating: AdminBookRating) {
+    const banReason = rating.banReason?.trim() || DEFAULT_RATING_BAN_REASON
+    await handleRatingModeration(rating.id, (authToken) => banAdminRating(authToken, rating.id, banReason))
+  }
+
+  async function handleRatingModeration(
+    ratingId: string,
+    action: (authToken: string) => Promise<void>,
+  ) {
+    if (!token) {
+      return
+    }
+
+    setModeratingRatingId(ratingId)
+    setError(null)
+
+    try {
+      await action(token)
+      await loadAdminData(token)
+    } catch {
+      setError('Rating statusini yangilashda xatolik yuz berdi.')
+    } finally {
+      setModeratingRatingId(null)
+    }
+  }
+
   function startEdit(book: Book) {
     setEditingBookId(book.id)
     setForm({
@@ -227,6 +265,9 @@ export function AdminPage() {
           dateRange={dateRange}
           onDateRangeChange={setDateRange}
           onSubmit={handleDashboardFilterSubmit}
+          onAcceptRating={handleAcceptRating}
+          onBanRating={handleBanRating}
+          moderatingRatingId={moderatingRatingId}
         />
       ) : null}
 
@@ -358,6 +399,9 @@ export function AdminPage() {
             totalPages: ratingsPage.totalPages,
             onPageChange: (page) => handleAdminPageChange('ratings', page),
           }}
+          onAcceptRating={handleAcceptRating}
+          onBanRating={handleBanRating}
+          moderatingRatingId={moderatingRatingId}
         />
       ) : null}
       {!isLoading && activeTab === 'users' ? (
@@ -381,11 +425,17 @@ function DashboardPanel({
   dateRange,
   onDateRangeChange,
   onSubmit,
+  onAcceptRating,
+  onBanRating,
+  moderatingRatingId,
 }: {
   dashboard: AdminDashboard
   dateRange: { from: string; to: string }
   onDateRangeChange: (value: { from: string; to: string }) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
+  onAcceptRating: (rating: AdminBookRating) => void
+  onBanRating: (rating: AdminBookRating) => void
+  moderatingRatingId: string | null
 }) {
   return (
     <section className="page-stack">
@@ -424,7 +474,13 @@ function DashboardPanel({
         <MetricCard label="Oraliqdagi oʻrtacha rating" value={dashboard.averageRatingInRange.toFixed(2)} />
       </div>
 
-      <RatingsTable title="Tanlangan oraliqdagi soʻnggi ratinglar" ratings={dashboard.recentRatings} />
+      <RatingsTable
+        title="Tanlangan oraliqdagi soʻnggi ratinglar"
+        ratings={dashboard.recentRatings}
+        onAcceptRating={onAcceptRating}
+        onBanRating={onBanRating}
+        moderatingRatingId={moderatingRatingId}
+      />
     </section>
   )
 }
@@ -442,11 +498,19 @@ function RatingsTable({
   ratings,
   title = 'Book rates jadvali',
   pagination,
+  onAcceptRating,
+  onBanRating,
+  moderatingRatingId,
 }: {
   ratings: AdminBookRating[]
   title?: string
   pagination?: PaginationView
+  onAcceptRating?: (rating: AdminBookRating) => void
+  onBanRating?: (rating: AdminBookRating) => void
+  moderatingRatingId?: string | null
 }) {
+  const hasModerationActions = onAcceptRating !== undefined && onBanRating !== undefined
+
   return (
     <section className="section-block table-panel">
       <h2>{title}</h2>
@@ -459,6 +523,7 @@ function RatingsTable({
               <th>Reyting</th>
               <th>Izoh</th>
               <th>Status</th>
+              {hasModerationActions ? <th>Amal</th> : null}
               <th>Sana</th>
             </tr>
           </thead>
@@ -477,6 +542,16 @@ function RatingsTable({
                 <td>
                   <RatingStatusBadge rating={rating} />
                 </td>
+                {onAcceptRating && onBanRating ? (
+                  <td>
+                    <RatingModerationActions
+                      rating={rating}
+                      isLoading={moderatingRatingId === rating.id}
+                      onAcceptRating={onAcceptRating}
+                      onBanRating={onBanRating}
+                    />
+                  </td>
+                ) : null}
                 <td>{new Date(rating.createdAt).toLocaleDateString('uz-UZ')}</td>
               </tr>
             ))}
@@ -488,10 +563,54 @@ function RatingsTable({
   )
 }
 
+function RatingModerationActions({
+  rating,
+  isLoading,
+  onAcceptRating,
+  onBanRating,
+}: {
+  rating: AdminBookRating
+  isLoading: boolean
+  onAcceptRating: (rating: AdminBookRating) => void
+  onBanRating: (rating: AdminBookRating) => void
+}) {
+  if (!canModerateRating(rating.status)) {
+    return <span className="table-muted">-</span>
+  }
+
+  return (
+    <div className="rating-action-buttons" aria-label="Rating moderatsiyasi">
+      <button
+        type="button"
+        className="rating-action-button rating-action-button--accept"
+        aria-label={`${rating.bookTitle} reytingini tasdiqlash`}
+        title="Tasdiqlash"
+        disabled={isLoading}
+        onClick={() => onAcceptRating(rating)}
+      >
+        ✓
+      </button>
+      <button
+        type="button"
+        className="rating-action-button rating-action-button--ban"
+        aria-label={`${rating.bookTitle} reytingini ban qilish`}
+        title="Ban qilish"
+        disabled={isLoading}
+        onClick={() => onBanRating(rating)}
+      >
+        ×
+      </button>
+    </div>
+  )
+}
+
+function canModerateRating(status: AdminBookRating['status']): boolean {
+  return status === 'New' || status === 'NeedsHumanReview'
+}
+
 function RatingStatusBadge({ rating }: { rating: AdminBookRating }) {
   const status = rating.status ?? 'New'
-  const banReason = rating.banReason?.trim()
-  const tooltip = status === 'Banned' ? banReason || 'Ban sababi kiritilmagan' : undefined
+  const tooltip = getRatingStatusTooltip(rating)
 
   return (
     <span
@@ -504,6 +623,21 @@ function RatingStatusBadge({ rating }: { rating: AdminBookRating }) {
       {status}
     </span>
   )
+}
+
+function getRatingStatusTooltip(rating: AdminBookRating): string | undefined {
+  const status = rating.status ?? 'New'
+  const reason = rating.banReason?.trim()
+
+  if (status === 'Banned') {
+    return reason || 'Ban sababi kiritilmagan'
+  }
+
+  if (status === 'NeedsHumanReview') {
+    return reason || 'Qoʻlda tekshirish sababi kiritilmagan'
+  }
+
+  return undefined
 }
 
 function getDefaultDateRange(): { from: string; to: string } {

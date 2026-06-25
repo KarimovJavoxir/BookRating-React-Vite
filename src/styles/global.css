@@ -813,6 +813,8 @@ p {
 }
 
 .rating-option {
+  display: inline-grid;
+  place-items: center;
   width: 42px;
   height: 42px;
   border: 1px solid var(--border);
@@ -1008,6 +1010,52 @@ th {
 .status-badge--banned {
   background: rgba(161, 63, 63, 0.14);
   color: var(--danger);
+}
+
+.status-badge--needshumanreview {
+  background: rgba(157, 112, 45, 0.16);
+  color: #8a5b19;
+}
+
+.table-muted {
+  color: var(--muted);
+}
+
+.rating-action-buttons {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.rating-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.rating-action-button--accept {
+  background: var(--brand);
+}
+
+.rating-action-button--ban {
+  background: var(--danger);
+}
+
+.rating-action-button:hover:not(:disabled) {
+  filter: brightness(0.96);
+}
+
+.rating-action-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
 }
 
 .status-badge[data-tooltip]:hover::after,

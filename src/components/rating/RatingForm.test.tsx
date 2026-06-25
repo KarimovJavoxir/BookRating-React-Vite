@@ -30,4 +30,16 @@ describe('RatingForm', () => {
     expect((screen.getByRole('radio', { name: '3' }) as HTMLInputElement).checked).toBe(true)
     expect((screen.getByRole('radio', { name: '5' }) as HTMLInputElement).checked).toBe(false)
   })
+
+  test('shows duplicate rating error from the backend', async () => {
+    const onSubmit = vi.fn().mockRejectedValue(
+      new Error('Siz bu kitobga allaqachon baho qoldirgansiz.'),
+    )
+
+    render(<RatingForm onSubmit={onSubmit} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Baholash' }))
+
+    expect(await screen.findByText('Siz bu kitobga allaqachon baho qoldirgansiz.')).toBeTruthy()
+  })
 })

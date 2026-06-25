@@ -1,6 +1,6 @@
 export type RatingValue = 1 | 2 | 3 | 4 | 5
 
-export type BookRatingStatus = 'New' | 'Verified' | 'Banned'
+export type BookRatingStatus = 'New' | 'Verified' | 'Banned' | 'NeedsHumanReview'
 
 export interface BookRating {
   id: string

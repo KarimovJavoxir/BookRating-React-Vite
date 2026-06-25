@@ -84,6 +84,45 @@ describe('AdminPage', () => {
               banReason: 'Spam izoh',
               createdAt: '2026-06-23T00:00:00Z',
             },
+            {
+              id: 'rating-2',
+              bookId: 'book-2',
+              bookTitle: 'Maʼlumotlar bazasi',
+              userId: 'user-2',
+              username: 'user02',
+              userProfilePictureUrl: null,
+              value: 3,
+              comment: 'Tekshiruv kerak',
+              status: 'NeedsHumanReview',
+              banReason: 'AI ishonchliligi past',
+              createdAt: '2026-06-24T00:00:00Z',
+            },
+            {
+              id: 'rating-3',
+              bookId: 'book-3',
+              bookTitle: 'Tarmoq xavfsizligi',
+              userId: 'user-3',
+              username: 'user03',
+              userProfilePictureUrl: null,
+              value: 4,
+              comment: 'Yangi izoh',
+              status: 'New',
+              banReason: null,
+              createdAt: '2026-06-25T00:00:00Z',
+            },
+            {
+              id: 'rating-4',
+              bookId: 'book-4',
+              bookTitle: 'Dasturlash amaliyoti',
+              userId: 'user-4',
+              username: 'user04',
+              userProfilePictureUrl: null,
+              value: 5,
+              comment: 'Tasdiqlangan izoh',
+              status: 'Verified',
+              banReason: null,
+              createdAt: '2026-06-26T00:00:00Z',
+            },
           ],
           page: 1,
           pageSize: 10,
@@ -94,6 +133,14 @@ describe('AdminPage', () => {
 
       if (url === 'http://localhost:5099/api/admin/ratings?page=2&pageSize=10') {
         return jsonResponse(emptyPage(2, 11))
+      }
+
+      if (url === 'http://localhost:5099/api/admin/ratings/rating-2/accept') {
+        return Promise.resolve(new Response(null, { status: 204 }))
+      }
+
+      if (url === 'http://localhost:5099/api/admin/ratings/rating-3/ban') {
+        return Promise.resolve(new Response(null, { status: 204 }))
       }
 
       return Promise.reject(new Error(`Unexpected request: ${url}`))
@@ -124,6 +171,25 @@ describe('AdminPage', () => {
     expect(statusBadge.getAttribute('title')).toBe('Spam izoh')
   })
 
+  test('shows human review rating status with review reason tooltip', async () => {
+    render(
+      <AuthContext.Provider value={adminSession}>
+        <MemoryRouter>
+          <AdminPage />
+        </MemoryRouter>
+      </AuthContext.Provider>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('Dashboard statistikasi')).toBeTruthy()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reytinglar' }))
+
+    const statusBadge = await screen.findByLabelText('NeedsHumanReview: AI ishonchliligi past')
+    expect(statusBadge.getAttribute('title')).toBe('AI ishonchliligi past')
+  })
+
   test('rating pagination reloads only the ratings table', async () => {
     render(
       <AuthContext.Provider value={adminSession}>
@@ -149,6 +215,68 @@ describe('AdminPage', () => {
     await waitFor(() => {
       const newUrls = fetchMock.mock.calls.slice(callsBeforePagination).map(([input]) => String(input))
       expect(newUrls).toEqual(['http://localhost:5099/api/admin/ratings?page=2&pageSize=10'])
+    })
+  })
+
+  test('shows moderation actions only for new and human review ratings', async () => {
+    render(
+      <AuthContext.Provider value={adminSession}>
+        <MemoryRouter>
+          <AdminPage />
+        </MemoryRouter>
+      </AuthContext.Provider>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('Dashboard statistikasi')).toBeTruthy()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reytinglar' }))
+
+    expect(await screen.findByRole('button', { name: /bazasi reytingini tasdiqlash/ })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Tarmoq xavfsizligi reytingini ban qilish' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Algoritmlar reytingini tasdiqlash' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Dasturlash amaliyoti reytingini ban qilish' })).toBeNull()
+  })
+
+  test('accepts and bans pending ratings from the ratings table', async () => {
+    render(
+      <AuthContext.Provider value={adminSession}>
+        <MemoryRouter>
+          <AdminPage />
+        </MemoryRouter>
+      </AuthContext.Provider>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('Dashboard statistikasi')).toBeTruthy()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reytinglar' }))
+    fireEvent.click(await screen.findByRole('button', { name: /bazasi reytingini tasdiqlash/ }))
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith('http://localhost:5099/api/admin/ratings/rating-2/accept', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer admin-token',
+        },
+        body: '{}',
+      })
+    })
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Tarmoq xavfsizligi reytingini ban qilish' }))
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith('http://localhost:5099/api/admin/ratings/rating-3/ban', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer admin-token',
+        },
+        body: JSON.stringify({ banReason: 'Admin tomonidan rad etildi' }),
+      })
     })
   })
 })
