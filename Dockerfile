@@ -1,7 +1,7 @@
 # Build stage
 FROM node:22-alpine AS build
 
-ARG VITE_API_BASE_URL=http://localhost:5099
+ARG VITE_API_BASE_URL=https://api.kitobreytingi.uz
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 
 WORKDIR /app
