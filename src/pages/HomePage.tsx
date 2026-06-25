@@ -4,7 +4,6 @@ import { BookList } from '../components/books/BookList'
 import { EmptyState } from '../components/common/EmptyState'
 import { ErrorState } from '../components/common/ErrorState'
 import { LoadingState } from '../components/common/LoadingState'
-import { PaginationControls } from '../components/common/PaginationControls'
 import { getTopRatedBooks } from '../services/booksService'
 import type { Book } from '../types/book'
 
@@ -12,28 +11,19 @@ const HOME_BOOKS_PAGE_SIZE = 3
 
 export function HomePage() {
   const [books, setBooks] = useState<Book[]>([])
-  const [currentPage, setCurrentPage] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  const totalPages = Math.ceil(books.length / HOME_BOOKS_PAGE_SIZE)
-  const safeCurrentPage = totalPages === 0 ? 1 : Math.min(currentPage, totalPages)
-  const visibleBooks = books.slice(
-    (safeCurrentPage - 1) * HOME_BOOKS_PAGE_SIZE,
-    safeCurrentPage * HOME_BOOKS_PAGE_SIZE,
-  )
 
   useEffect(() => {
     let isCurrentRequest = true
 
-    getTopRatedBooks()
+    getTopRatedBooks(HOME_BOOKS_PAGE_SIZE)
       .then((items) => {
         if (!isCurrentRequest) {
           return
         }
 
         setBooks(items)
-        setCurrentPage(1)
         setError(null)
       })
       .catch(() => {
@@ -103,16 +93,7 @@ export function HomePage() {
           <EmptyState title="Kitoblar topilmadi" description="Backend API kitoblar roʻyxatini qaytarmadi." />
         ) : null}
         {!isLoading && !error && books.length > 0 ? (
-          <>
-            <BookList books={visibleBooks} />
-            <PaginationControls
-              currentPage={safeCurrentPage}
-              pageSize={HOME_BOOKS_PAGE_SIZE}
-              totalCount={books.length}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
-          </>
+          <BookList books={books} />
         ) : null}
       </section>
     </div>

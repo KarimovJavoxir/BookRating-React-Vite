@@ -1,11 +1,14 @@
 import type { Book, BookFormData } from '../types/book'
 import type { PagedResponse, PaginationParams } from '../types/api'
-import { getUniqueBookCategories, sortBooksByRating } from '../utils/bookFilters'
 import { ApiClientError, deleteJson, getJson, postJson, putJson } from './apiClient'
 import { FULL_LIST_PAGE_SIZE, toPaginationQueryString } from './pagination'
 
-export async function getBooksPage(pagination: PaginationParams = {}): Promise<PagedResponse<Book>> {
-  return getJson<PagedResponse<Book>>(`/api/books?${toPaginationQueryString(pagination)}`)
+export interface BookListParams extends PaginationParams {
+  category?: string
+}
+
+export async function getBooksPage(pagination: BookListParams = {}): Promise<PagedResponse<Book>> {
+  return getJson<PagedResponse<Book>>(`/api/books?${toBookListQueryString(pagination)}`)
 }
 
 export async function getBooks(): Promise<Book[]> {
@@ -32,14 +35,18 @@ export async function getBookById(id: string): Promise<Book | null> {
 }
 
 export async function getBookCategories(): Promise<string[]> {
-  const books = await getBooks()
-  return getUniqueBookCategories(books)
+  return getJson<string[]>('/api/books/categories')
 }
 
 export async function getTopRatedBooks(limit?: number): Promise<Book[]> {
-  const books = await getBooks()
-  const sortedBooks = sortBooksByRating(books)
-  return typeof limit === 'number' ? sortedBooks.slice(0, limit) : sortedBooks
+  const params = new URLSearchParams()
+
+  if (typeof limit === 'number') {
+    params.set('limit', String(limit))
+  }
+
+  const queryString = params.toString()
+  return getJson<Book[]>(`/api/books/top-rated${queryString ? `?${queryString}` : ''}`)
 }
 
 export async function createBook(book: BookFormData, authToken: string): Promise<Book> {
@@ -81,4 +88,15 @@ async function getAllBookPages(): Promise<Book[]> {
   }
 
   return items
+}
+
+function toBookListQueryString(pagination: BookListParams = {}): string {
+  const params = new URLSearchParams(toPaginationQueryString(pagination))
+  const category = pagination.category?.trim()
+
+  if (category) {
+    params.set('category', category)
+  }
+
+  return params.toString()
 }

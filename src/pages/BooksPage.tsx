@@ -17,17 +17,22 @@ export function BooksPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [categories, setCategories] = useState<string[]>([])
   const [categoryError, setCategoryError] = useState<string | null>(null)
-  const { books, isLoading, error } = useBookSearch(query, selectedCategory)
-  const totalPages = Math.ceil(books.length / BOOKS_PAGE_SIZE)
-  const safeCurrentPage = totalPages === 0 ? 1 : Math.min(currentPage, totalPages)
-  const visibleBooks = books.slice(
-    (safeCurrentPage - 1) * BOOKS_PAGE_SIZE,
-    safeCurrentPage * BOOKS_PAGE_SIZE,
+  const { books, pageSize, totalCount, totalPages, isLoading, error } = useBookSearch(
+    query,
+    selectedCategory,
+    currentPage,
+    BOOKS_PAGE_SIZE,
   )
 
-  useEffect(() => {
+  function handleQueryChange(nextQuery: string) {
+    setQuery(nextQuery)
     setCurrentPage(1)
-  }, [query, selectedCategory])
+  }
+
+  function handleCategoryChange(nextCategory?: string) {
+    setSelectedCategory(nextCategory)
+    setCurrentPage(1)
+  }
 
   useEffect(() => {
     let isCurrentRequest = true
@@ -54,6 +59,21 @@ export function BooksPage() {
     }
   }, [])
 
+  useEffect(() => {
+    if (isLoading) {
+      return
+    }
+
+    if (totalPages === 0 && currentPage !== 1) {
+      setCurrentPage(1)
+      return
+    }
+
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages)
+    }
+  }, [currentPage, isLoading, totalPages])
+
   return (
     <div className="page-stack">
       <section className="page-heading">
@@ -66,17 +86,17 @@ export function BooksPage() {
       </section>
 
       <section className="toolbar" aria-label="Kitoblarni qidirish va saralash">
-        <SearchInput value={query} onChange={setQuery} />
+        <SearchInput value={query} onChange={handleQueryChange} />
         <CategoryFilter
           categories={categories}
           selectedCategory={selectedCategory}
-          onChange={setSelectedCategory}
+          onChange={handleCategoryChange}
         />
       </section>
 
       <section className="section-block">
         <div className="result-summary">
-          <strong>{books.length}</strong>
+          <strong>{totalCount}</strong>
           <span>ta kitob topildi</span>
         </div>
 
@@ -91,11 +111,11 @@ export function BooksPage() {
         ) : null}
         {!isLoading && !error && books.length > 0 ? (
           <>
-            <BookList books={visibleBooks} />
+            <BookList books={books} />
             <PaginationControls
-              currentPage={safeCurrentPage}
-              pageSize={BOOKS_PAGE_SIZE}
-              totalCount={books.length}
+              currentPage={currentPage}
+              pageSize={pageSize}
+              totalCount={totalCount}
               totalPages={totalPages}
               onPageChange={setCurrentPage}
             />

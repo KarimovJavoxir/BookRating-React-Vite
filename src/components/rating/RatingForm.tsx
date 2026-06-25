@@ -24,7 +24,7 @@ export function RatingForm({ onSubmit }: RatingFormProps) {
         comment,
       })
       setComment('')
-      setStatusMessage('Baholash qabul qilindi. Reyting maʼlumotlari yangilandi.')
+      setStatusMessage('Baholash qabul qilindi. Izoh moderatsiyadan keyin koʻrinadi.')
     } catch {
       setStatusMessage('Baholashni yuborishda xatolik yuz berdi.')
     } finally {
@@ -36,17 +36,22 @@ export function RatingForm({ onSubmit }: RatingFormProps) {
     <form className="rating-form" onSubmit={handleSubmit}>
       <fieldset>
         <legend>Kitobni baholash</legend>
-        <div className="rating-options" role="radiogroup" aria-label="Reyting qiymati">
+        <div className="rating-options">
           {ratingOptions.map((option) => (
-            <button
+            <label
               key={option}
-              type="button"
               className={option === value ? 'rating-option active' : 'rating-option'}
-              onClick={() => setValue(option)}
-              aria-pressed={option === value}
             >
-              {option}
-            </button>
+              <input
+                className="visually-hidden"
+                type="radio"
+                name="rating-value"
+                value={option}
+                checked={option === value}
+                onChange={() => setValue(option)}
+              />
+              <span>{option}</span>
+            </label>
           ))}
         </div>
       </fieldset>

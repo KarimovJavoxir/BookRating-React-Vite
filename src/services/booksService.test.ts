@@ -117,30 +117,22 @@ describe('booksService', () => {
     expect(fetchMock).toHaveBeenCalledWith('http://localhost:5099/api/books/book-1', undefined)
   })
 
-  test('derives categories from backend books', async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse({
-      items: apiBooks,
-      page: 1,
-      pageSize: 100,
-      totalCount: 2,
-      totalPages: 1,
-    }))
+  test('loads categories from the backend categories endpoint', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(['Dasturlash', 'Xavfsizlik']))
 
     await expect(getBookCategories()).resolves.toEqual(['Dasturlash', 'Xavfsizlik'])
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledWith('http://localhost:5099/api/books/categories', undefined)
   })
 
   test('uses backend books for the top-rated list', async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse({
-      items: apiBooks,
-      page: 1,
-      pageSize: 100,
-      totalCount: 2,
-      totalPages: 1,
-    }))
+    fetchMock.mockResolvedValueOnce(jsonResponse([apiBooks[1]]))
 
     const books = await getTopRatedBooks(1)
 
     expect(books.map((book) => book.id)).toEqual(['book-2'])
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledWith('http://localhost:5099/api/books/top-rated?limit=1', undefined)
   })
 
   test('creates a book through the admin backend endpoint', async () => {

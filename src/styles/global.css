@@ -981,6 +981,69 @@ th {
   text-transform: uppercase;
 }
 
+.status-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.status-badge--verified {
+  background: rgba(31, 111, 91, 0.14);
+  color: var(--brand-dark);
+}
+
+.status-badge--new {
+  background: rgba(56, 111, 164, 0.14);
+  color: var(--blue);
+}
+
+.status-badge--banned {
+  background: rgba(161, 63, 63, 0.14);
+  color: var(--danger);
+}
+
+.status-badge[data-tooltip]:hover::after,
+.status-badge[data-tooltip]:focus::after {
+  position: absolute;
+  z-index: 10;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  width: max-content;
+  max-width: 260px;
+  transform: translateX(-50%);
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: var(--text);
+  color: var(--surface);
+  box-shadow: var(--shadow);
+  content: attr(data-tooltip);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.35;
+  white-space: normal;
+}
+
+.status-badge[data-tooltip]:hover::before,
+.status-badge[data-tooltip]:focus::before {
+  position: absolute;
+  z-index: 11;
+  left: 50%;
+  bottom: calc(100% + 3px);
+  width: 10px;
+  height: 10px;
+  transform: translateX(-50%) rotate(45deg);
+  background: var(--text);
+  content: "";
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -1292,4 +1355,15 @@ th {
 
 .theme-toggle-track.light .theme-toggle-thumb {
   color: #d79d2a;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

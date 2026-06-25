@@ -35,6 +35,20 @@ describe('apiClient', () => {
     expect(fetchMock).toHaveBeenCalledWith('http://localhost:5099/api/books', undefined)
   })
 
+  test('deduplicates identical in-flight GET requests', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse([{ id: 'book-1' }]))
+
+    const [firstBooks, secondBooks] = await Promise.all([
+      getJson<Array<{ id: string }>>('/api/books?page=1&pageSize=9'),
+      getJson<Array<{ id: string }>>('/api/books?page=1&pageSize=9'),
+    ])
+
+    expect(firstBooks).toEqual([{ id: 'book-1' }])
+    expect(secondBooks).toEqual([{ id: 'book-1' }])
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledWith('http://localhost:5099/api/books?page=1&pageSize=9', undefined)
+  })
+
   test('sends JSON request bodies through the API client', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ id: 'book-1', averageRating: 5 }))
 

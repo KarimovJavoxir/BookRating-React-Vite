@@ -6,18 +6,6 @@ export function isRatingValue(value: number): value is RatingValue {
   return Number.isInteger(value) && value >= 1 && value <= 5
 }
 
-export function calculateUpdatedBookRating(book: Book, value: RatingValue): Book {
-  const currentTotal = book.averageRating * book.ratingsCount
-  const nextCount = book.ratingsCount + 1
-  const nextAverage = Number(((currentTotal + value) / nextCount).toFixed(1))
-
-  return {
-    ...book,
-    averageRating: nextAverage,
-    ratingsCount: nextCount,
-  }
-}
-
 export async function submitBookRating(
   bookId: string,
   submission: RatingSubmission,

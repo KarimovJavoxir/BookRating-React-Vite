@@ -5,14 +5,27 @@ import { useDebounce } from './useDebounce'
 
 interface BookSearchState {
   books: Book[]
+  page: number
+  pageSize: number
+  totalCount: number
+  totalPages: number
   isLoading: boolean
   error: string | null
 }
 
-export function useBookSearch(query: string, category?: string): BookSearchState {
+export function useBookSearch(
+  query: string,
+  category: string | undefined,
+  page: number,
+  pageSize: number,
+): BookSearchState {
   const debouncedQuery = useDebounce(query, 300)
   const [state, setState] = useState<BookSearchState>({
     books: [],
+    page,
+    pageSize,
+    totalCount: 0,
+    totalPages: 0,
     isLoading: true,
     error: null,
   })
@@ -22,18 +35,24 @@ export function useBookSearch(query: string, category?: string): BookSearchState
 
     setState((currentState) => ({
       ...currentState,
+      page,
+      pageSize,
       isLoading: true,
       error: null,
     }))
 
-    searchBooks({ query: debouncedQuery, category })
-      .then((books) => {
+    searchBooks({ query: debouncedQuery, category }, { page, pageSize })
+      .then((result) => {
         if (!isCurrentRequest) {
           return
         }
 
         setState({
-          books,
+          books: result.items,
+          page: result.page,
+          pageSize: result.pageSize,
+          totalCount: result.totalCount,
+          totalPages: result.totalPages,
           isLoading: false,
           error: null,
         })
@@ -45,6 +64,10 @@ export function useBookSearch(query: string, category?: string): BookSearchState
 
         setState({
           books: [],
+          page,
+          pageSize,
+          totalCount: 0,
+          totalPages: 0,
           isLoading: false,
           error: 'Kitoblarni qidirishda xatolik yuz berdi.',
         })
@@ -53,7 +76,7 @@ export function useBookSearch(query: string, category?: string): BookSearchState
     return () => {
       isCurrentRequest = false
     }
-  }, [category, debouncedQuery])
+  }, [category, debouncedQuery, page, pageSize])
 
   return state
 }

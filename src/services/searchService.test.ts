@@ -39,38 +39,43 @@ describe('searchService', () => {
     globalThis.fetch = fetchMock as unknown as typeof fetch
   })
 
-  test('loads the full backend list when the search query is empty', async () => {
+  test('loads only the requested backend page when the search query is empty', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({
       items: apiBooks,
-      page: 1,
-      pageSize: 100,
-      totalCount: 2,
-      totalPages: 1,
+      page: 2,
+      pageSize: 9,
+      totalCount: 60,
+      totalPages: 7,
     }))
 
-    const books = await searchBooks({ query: '' })
+    const result = await searchBooks({ query: '', category: 'Dasturlash' }, { page: 2, pageSize: 9 })
 
-    expect(books.map((book) => book.id)).toEqual(['book-2', 'book-1'])
-    expect(fetchMock).toHaveBeenCalledWith('http://localhost:5099/api/books?page=1&pageSize=100', undefined)
-  })
-
-  test('uses the backend search endpoint for live search queries', async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse([apiBooks[0]]))
-
-    const books = await searchBooks({ query: 'algoritm' })
-
-    expect(books.map((book) => book.id)).toEqual(['book-1'])
+    expect(result.items.map((book) => book.id)).toEqual(['book-1', 'book-2'])
+    expect(result.totalPages).toBe(7)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(fetchMock).toHaveBeenCalledWith(
-      'http://localhost:5099/api/books/search?q=algoritm',
+      'http://localhost:5099/api/books?page=2&pageSize=9&category=Dasturlash',
       undefined,
     )
   })
 
-  test('keeps category filtering client-side after backend search', async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse(apiBooks))
+  test('uses backend pagination and category filtering for live search queries', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({
+      items: [apiBooks[1]],
+      page: 2,
+      pageSize: 9,
+      totalCount: 12,
+      totalPages: 2,
+    }))
 
-    const books = await searchBooks({ query: 'a', category: 'Xavfsizlik' })
+    const result = await searchBooks({ query: 'algoritm', category: 'Xavfsizlik' }, { page: 2, pageSize: 9 })
 
-    expect(books.map((book) => book.id)).toEqual(['book-2'])
+    expect(result.items.map((book) => book.id)).toEqual(['book-2'])
+    expect(result.page).toBe(2)
+    expect(result.totalCount).toBe(12)
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://localhost:5099/api/books/search?q=algoritm&page=2&pageSize=9&category=Xavfsizlik',
+      undefined,
+    )
   })
 })

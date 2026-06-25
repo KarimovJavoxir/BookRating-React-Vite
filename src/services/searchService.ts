@@ -1,18 +1,29 @@
 import type { Book, BookSearchFilters } from '../types/book'
-import { filterBooksByQueryAndCategory, sortBooksByRating } from '../utils/bookFilters'
+import type { PagedResponse, PaginationParams } from '../types/api'
 import { getJson } from './apiClient'
-import { getBooks } from './booksService'
+import { getBooksPage } from './booksService'
+import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from './pagination'
 
-export async function searchBooks(filters: BookSearchFilters): Promise<Book[]> {
+export async function searchBooks(
+  filters: BookSearchFilters,
+  pagination: PaginationParams = {},
+): Promise<PagedResponse<Book>> {
+  const page = pagination.page ?? DEFAULT_PAGE
+  const pageSize = pagination.pageSize ?? DEFAULT_PAGE_SIZE
   const query = filters.query.trim()
-  const books = query
-    ? await getJson<Book[]>(`/api/books/search?q=${encodeURIComponent(query)}`)
-    : await getBooks()
+  if (!query) {
+    return getBooksPage({ page, pageSize, category: filters.category })
+  }
 
-  return sortBooksByRating(
-    filterBooksByQueryAndCategory(books, {
-      query: '',
-      category: filters.category,
-    }),
-  )
+  const params = new URLSearchParams({
+    q: query,
+    page: String(page),
+    pageSize: String(pageSize),
+  })
+  const category = filters.category?.trim()
+  if (category) {
+    params.set('category', category)
+  }
+
+  return getJson<PagedResponse<Book>>(`/api/books/search?${params.toString()}`)
 }

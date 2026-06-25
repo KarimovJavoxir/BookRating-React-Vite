@@ -6,6 +6,7 @@ interface ApiClientEnvironment {
 }
 
 let unauthorizedHandler: (() => void) | null = null
+const inFlightGetRequests = new Map<string, Promise<unknown>>()
 
 export const apiBaseUrl = resolveApiBaseUrl()
 
@@ -50,7 +51,20 @@ export async function getJson<TResponse>(
   path: string,
   options?: ApiRequestOptions,
 ): Promise<TResponse> {
-  return requestJson<TResponse>(path, undefined, options)
+  const cacheKey = getRequestCacheKey(path, options)
+  const inFlightRequest = inFlightGetRequests.get(cacheKey)
+
+  if (inFlightRequest) {
+    return inFlightRequest as Promise<TResponse>
+  }
+
+  const request = requestJson<TResponse>(path, undefined, options)
+    .finally(() => {
+      inFlightGetRequests.delete(cacheKey)
+    })
+
+  inFlightGetRequests.set(cacheKey, request)
+  return request
 }
 
 export async function postJson<TResponse>(
@@ -111,6 +125,10 @@ async function requestJson<TResponse>(
 function buildApiUrl(path: string): string {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
   return `${apiBaseUrl}${normalizedPath}`
+}
+
+function getRequestCacheKey(path: string, options?: ApiRequestOptions): string {
+  return `${buildApiUrl(path)}|${options?.authToken ?? ''}`
 }
 
 function buildRequestInit(init?: RequestInit, options?: ApiRequestOptions): RequestInit | undefined {

@@ -35,6 +35,7 @@ export function AdminPage() {
   const [usersPage, setUsersPage] = useState(() => createEmptyPagedResponse<AdminUser>(ADMIN_TABLE_PAGE_SIZE))
   const [dashboard, setDashboard] = useState<AdminDashboard | null>(null)
   const [dateRange, setDateRange] = useState(() => getDefaultDateRange())
+  const [appliedDateRange, setAppliedDateRange] = useState(() => dateRange)
   const [pagination, setPagination] = useState<Record<AdminListTab, Required<PaginationParams>>>(() => ({
     books: { page: 1, pageSize: ADMIN_TABLE_PAGE_SIZE },
     ratings: { page: 1, pageSize: ADMIN_TABLE_PAGE_SIZE },
@@ -51,22 +52,34 @@ export function AdminPage() {
     setError(null)
 
     try {
-      const [dashboardData, bookItems, ratingItems, userItems] = await Promise.all([
-        getAdminDashboard(authToken, dateRange),
-        getAdminBooks(authToken, pagination.books),
-        getAdminRatings(authToken, pagination.ratings),
-        getAdminUsers(authToken, pagination.users),
-      ])
-      setDashboard(dashboardData)
-      setBooksPage(bookItems)
-      setRatingsPage(ratingItems)
-      setUsersPage(userItems)
+      if (activeTab === 'dashboard') {
+        setDashboard(await getAdminDashboard(authToken, appliedDateRange))
+        return
+      }
+
+      if (activeTab === 'books') {
+        setBooksPage(await getAdminBooks(authToken, pagination.books))
+        return
+      }
+
+      if (activeTab === 'ratings') {
+        setRatingsPage(await getAdminRatings(authToken, pagination.ratings))
+        return
+      }
+
+      setUsersPage(await getAdminUsers(authToken, pagination.users))
     } catch {
       setError('Admin maʼlumotlarini yuklashda xatolik yuz berdi.')
     } finally {
       setIsLoading(false)
     }
-  }, [dateRange, pagination])
+  }, [
+    activeTab,
+    appliedDateRange,
+    pagination.books,
+    pagination.ratings,
+    pagination.users,
+  ])
 
   useEffect(() => {
     if (!token || !user?.isAdmin) {
@@ -84,6 +97,11 @@ export function AdminPage() {
     }
 
     setError(null)
+    if (dateRange.from !== appliedDateRange.from || dateRange.to !== appliedDateRange.to) {
+      setAppliedDateRange(dateRange)
+      return
+    }
+
     try {
       setDashboard(await getAdminDashboard(token, dateRange))
     } catch {
@@ -108,7 +126,7 @@ export function AdminPage() {
       }
 
       resetForm()
-      await loadAdminData(token)
+      setBooksPage(await getAdminBooks(token, pagination.books))
     } catch {
       setError('Kitob maʼlumotlarini saqlashda xatolik yuz berdi.')
     } finally {
@@ -124,7 +142,7 @@ export function AdminPage() {
     setError(null)
     try {
       await deleteBook(bookId, token)
-      await loadAdminData(token)
+      setBooksPage(await getAdminBooks(token, pagination.books))
     } catch {
       setError('Kitobni oʻchirishda xatolik yuz berdi.')
     }
@@ -440,6 +458,7 @@ function RatingsTable({
               <th>Foydalanuvchi</th>
               <th>Reyting</th>
               <th>Izoh</th>
+              <th>Status</th>
               <th>Sana</th>
             </tr>
           </thead>
@@ -455,6 +474,9 @@ function RatingsTable({
                 </td>
                 <td>{rating.value} / 5</td>
                 <td>{rating.comment ?? '-'}</td>
+                <td>
+                  <RatingStatusBadge rating={rating} />
+                </td>
                 <td>{new Date(rating.createdAt).toLocaleDateString('uz-UZ')}</td>
               </tr>
             ))}
@@ -463,6 +485,24 @@ function RatingsTable({
       </div>
       {pagination ? <PaginationControls {...pagination} /> : null}
     </section>
+  )
+}
+
+function RatingStatusBadge({ rating }: { rating: AdminBookRating }) {
+  const status = rating.status ?? 'New'
+  const banReason = rating.banReason?.trim()
+  const tooltip = status === 'Banned' ? banReason || 'Ban sababi kiritilmagan' : undefined
+
+  return (
+    <span
+      className={`status-badge status-badge--${status.toLowerCase()}`}
+      title={tooltip}
+      data-tooltip={tooltip}
+      aria-label={tooltip ? `${status}: ${tooltip}` : status}
+      tabIndex={tooltip ? 0 : undefined}
+    >
+      {status}
+    </span>
   )
 }
 

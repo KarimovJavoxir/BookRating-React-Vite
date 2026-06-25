@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Book } from '../types/book'
-import { calculateUpdatedBookRating, isRatingValue, submitBookRating } from './ratingsService'
+import { isRatingValue, submitBookRating } from './ratingsService'
 
 const fetchMock = vi.fn()
 
@@ -35,27 +35,10 @@ describe('ratingsService', () => {
     expect(isRatingValue(3.5)).toBe(false)
   })
 
-  test('updates average rating and rating count after a new rating', () => {
-    const updatedBook = calculateUpdatedBookRating(book, 5)
-
-    expect(updatedBook.averageRating).toBe(4.3)
-    expect(updatedBook.ratingsCount).toBe(3)
-  })
-
-  test('submits a rating to the backend and returns updated book details', async () => {
+  test('submits a rating to the backend and returns moderated book details', async () => {
     const updatedBook = {
       ...book,
-      averageRating: 4.3,
-      ratingsCount: 3,
-      recentRatings: [
-        {
-          id: 'rating-1',
-          bookId: 'book-1',
-          value: 5,
-          comment: 'Foydali kitob',
-          createdAt: '2026-06-23T00:00:00Z',
-        },
-      ],
+      recentRatings: [],
     }
     fetchMock.mockResolvedValueOnce(jsonResponse(updatedBook))
 

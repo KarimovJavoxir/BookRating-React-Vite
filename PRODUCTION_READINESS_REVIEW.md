@@ -1,8 +1,8 @@
 # Frontend production readiness review
 
-Sana: 2026-06-23  
-Loyiha: `src/frontend`  
-Xulosa: avval topilgan frontend blockerlar tuzatildi. Hozir frontend build/test/lint darajasida productionga tayyor, lekin real production deploydan oldin `VITE_API_BASE_URL` production API manziliga sozlanishi shart.
+Sana: 2026-06-25
+Loyiha: `src/frontend`
+Xulosa: frontend va unga bogʻliq search API kontrakti build/test/lint darajasida productionga yaqin holatga keltirildi. Auth session foydalanuvchi talabi bo‘yicha `localStorage`da saqlanadi. Real production deploydan oldin `VITE_API_BASE_URL` production backend manziliga sozlanishi shart.
 
 ## Yakuniy tekshiruv natijalari
 
@@ -13,72 +13,46 @@ npm.cmd run lint
 npm.cmd test
 npm.cmd run build
 npm.cmd audit --audit-level=moderate
+dotnet build
+dotnet test
 ```
 
 Natija:
 
 - `npm.cmd run lint` muvaffaqiyatli yakunlandi.
-- `npm.cmd test` muvaffaqiyatli yakunlandi: 10 ta test fayli, 34 ta test.
+- `npm.cmd test` muvaffaqiyatli yakunlandi: 18 ta test fayli, 50 ta test.
 - `npm.cmd run build` muvaffaqiyatli yakunlandi.
 - `npm.cmd audit --audit-level=moderate` 0 vulnerability qaytardi.
+- `dotnet build` muvaffaqiyatli yakunlandi: 0 warning, 0 error.
+- `dotnet test` muvaffaqiyatli yakunlandi: 36 ta backend test.
 
 ## Tuzatilgan muammolar
 
-### 1. Production build blocker tuzatildi
+### 1. Search pagination end-to-end tuzatildi
 
-`LoadingState` komponenti yana `message` prop qabul qiladi va sahifalardagi mavjud chaqiruvlar bilan mos ishlaydi. `npm.cmd run build` endi xatosiz yakunlanadi.
+`GET /api/books/search` endi `page`, `pageSize` va `category` query parametrlarini qabul qiladi va `PagedResult` formatida javob qaytaradi.
 
-Tegishli fayllar:
+Frontend `src/services/searchService.ts` endi qidiruv natijalarini client-side kesmaydi. U backendga qidiruv soʻrovi bilan birga pagination parametrlarini yuboradi.
 
-- `src/components/common/LoadingState.tsx`
-- `src/pages/AdminPage.tsx`
-- `src/pages/BookDetailsPage.tsx`
-- `src/pages/BooksPage.tsx`
+### 2. Mock/demo source fayllar olib tashlandi
 
-### 2. API base URL productionda majburiy qilindi
+`src/services/mock/mockBooks.ts` va `src/services/mock/mockDelay.ts` o‘chirildi. Runtime kodda mock, fake yoki hardcoded demo data ishlatilmaydi.
 
-`src/services/apiClient.ts` production rejimida `VITE_API_BASE_URL` berilmasa, `localhost` fallbackga tushmaydi va aniq xato beradi.
+### 3. Rating UI accessibility yaxshilandi
 
-Bu foydalanuvchi brauzeri productionda tasodifan `http://localhost:5099` ga soʻrov yuborishining oldini oladi.
+Rating tanlash tugmalari native `radio` inputlarga almashtirildi. Vizual ko‘rinish saqlandi, lekin screen reader va form semantics to‘g‘rilandi.
 
-### 3. Auth session xavfi kamaytirildi
+### 4. User-facing TODO olib tashlandi
 
-`src/services/authService.ts` endi `localStorage`dan olingan session payload formatini tekshiradi. Notoʻgʻri session avtomatik tozalanadi.
+Kitob tafsilotlarida `publishedYear` bo‘lmasa, endi foydalanuvchiga `TODO:` matni ko‘rinmaydi. Uning o‘rniga neytral `Nashr yili kiritilmagan` matni chiqadi.
 
-`src/services/apiClient.ts` va `src/context/AuthContext.tsx` orqali authenticated soʻrovlarda backend `401` yoki `403` qaytarsa, frontend sessionni tozalaydi.
+### 5. Reduced motion qo‘llab-quvvatlandi
 
-Izoh: backend auth javobida token muddati alohida maydon sifatida qaytmaydi. Shu sababli frontendda expiry tekshiruvini toʻliq qilish uchun backend kontraktini kengaytirish kerak boʻladi.
-
-### 4. Muqova rasmi fallbacki qoʻshildi
-
-`src/components/books/BookCover.tsx` tashqi rasm URL yuklanmasa placeholder muqovani koʻrsatadi. Rasm `alt` matni ham aniqroq qilindi.
-
-### 5. Loading UI accessibility regressiyasi tuzatildi
-
-`LoadingState` endi `role="status"` va `aria-live="polite"` bilan loading holatini ekran oʻquvchilarga eʼlon qiladi. Skeleton elementlari uchun regression test qoʻshildi.
-
-### 6. Oʻzbekcha belgi xatosi tuzatildi
-
-`src/components/common/ThemeToggle.tsx` ichidagi `o'zgartirish` matni `oʻzgartirish` koʻrinishiga keltirildi.
-
-### 7. Test coverage kengaytirildi
-
-Quyidagi regression testlar qoʻshildi:
-
-- `src/components/common/LoadingState.test.tsx`
-- `src/components/books/BookCover.test.tsx`
-- `src/components/common/ThemeToggle.test.tsx`
-
-Mavjud service testlari ham API base URL, unauthorized handler va invalid auth session holatlarini qamrab oladigan qilib kengaytirildi.
-
-### 8. Media URL va avatar koʻrinishi yaxshilandi
-
-`coverImageUrl`, `profilePictureUrl` va `userProfilePictureUrl` qiymatlari relative path boʻlsa, frontend ularni backend API base URL bilan birlashtiradi. Masalan, `/uploads/users/user-1.jpg` production yoki local backend URL orqali ochiladi.
-
-Profile photo mavjud boʻlmasa, user avatar placeholderi har doim `U` harfini koʻrsatadi. Placeholder letter CSS orqali markazga joylanadi.
+CSSga `prefers-reduced-motion: reduce` override qo‘shildi. Animatsiya va transitionlar motion sensitivity bo‘lgan foydalanuvchilar uchun minimal holatga tushadi.
 
 ## Productionga chiqishdan oldin tekshiriladigan tashqi shartlar
 
-- Hosting yoki Docker muhitida `VITE_API_BASE_URL` haqiqiy backend API manziliga sozlangan boʻlishi kerak.
+- Hosting yoki Docker muhitida `VITE_API_BASE_URL` haqiqiy backend API manziliga sozlangan bo‘lishi kerak.
 - Backend CORS sozlamalari frontend domenini ruxsat qilishi kerak.
-- JWT token muddati frontendga alohida maydon sifatida qaytarilishi kerak boʻlsa, backend kontrakti kengaytiriladi.
+- Auth token `localStorage`da saqlanishi foydalanuvchi talabi sifatida qoldirildi; XSS xavfini kamaytirish uchun CSP, sanitizatsiya va dependency audit qatʼiy saqlanishi kerak.
+- Search endpointning yangi paged response kontrakti frontend deploy qilinadigan backend bilan birga chiqishi kerak.

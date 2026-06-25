@@ -104,7 +104,7 @@ export function BookDetailsPage() {
           <dl className="metadata-list">
             <div>
               <dt>Nashr yili</dt>
-              <dd>{book.publishedYear ?? 'TODO: Nashr yili aniqlashtiriladi.'}</dd>
+              <dd>{book.publishedYear ?? 'Nashr yili kiritilmagan'}</dd>
             </div>
             <div>
               <dt>Maʼlumot manbasi</dt>
